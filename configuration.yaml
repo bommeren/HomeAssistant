@@ -1,0 +1,175 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+config:
+
+#Includes
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+homeassistant:
+  name: !secret Home_StreetAdress
+  latitude: !secret Home_Latitude
+  longitude: !secret Home_Longitude
+  elevation: 7
+  time_zone: Europe/Amsterdam
+  external_url: !secret External_url
+  internal_url: !secret Internal_url
+  packages: !include_dir_named packages
+
+lovelace:
+  mode: storage
+  # Add yaml dashboards
+  dashboards:
+    lovelace-yaml:
+      mode: yaml
+      title: WallMount_YAML
+      icon: mdi:script
+      show_in_sidebar: true
+      filename: ui-lovelace.yaml
+
+http:
+  #SSL Setup > Certificate retreived though DuckDNS and LetsEncrypt
+  login_attempts_threshold: 20
+  ip_ban_enabled: true
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+#Camera Integrations
+#camera:
+#  - platform: buienradar
+
+#Shelly Integration
+shelly:
+  discovery: false
+  version: true #add version sensor
+  sensors:
+    - all
+  attributes:
+    - all
+  devices: #devices to be added
+    - id: "68C63AFB413A" #Shelly 1PM // 192.168.1.150
+      name: Buitenlamp achtertuin schakelaar #set friendly name
+      upgrade_switch: false
+
+    - id: "021C7B" #Shelly Plug // 192.168.1.151
+      name: Power Plug Meterkast #set friendly name
+      upgrade_switch: false
+
+    - id: "D8BFC01A8060" #Shelly // 3EM 192.168.1.152
+      name: Zonnepanelen Energy Monitor #set friendly name
+      upgrade_switch: false
+
+#Database
+influxdb:
+  host: a0d7b954-influxdb
+  port: 8086
+  database: HomeAssistant_DB
+  username: !secret User_InfluxDb
+  password: !secret PW_InfluxDb
+  max_retries: 5
+  default_measurement: state
+
+#Weather Integeration
+#weather:
+#  - platform: buienradar
+#    #    latitude: 51.87
+#    #    longitude: 5.15
+#    name: "Buienradar"
+#    forecast: true
+
+#Presence Detection Device Tracker
+device_tracker:
+  - platform: netgear
+    username: !secret User_Router
+    password: !secret PW_Router
+    new_device_defaults:
+      track_new_devices: true
+
+#Custom Sensors
+sensor:
+  - platform: dsmr
+    port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AG5HUT2O-if00-port0
+    dsmr_version: 4
+
+  # Totaal Kwh verbruik hoog + laag tarief
+  - platform: template
+    sensors:
+      energy_consumption_tarif_sum1_2:
+        friendly_name: "Total Consumption Kwh"
+        unit_of_measurement: "kWh"
+        value_template: "{{ '%6.3f'| format( states('sensor.energy_consumption_tarif_1') | float + states('sensor.energy_consumption_tarif_2') | float)  }}"
+
+  #   - platform: buienalarm
+  #     timeframe: 60
+  #     #    name: buienalarm
+  #     monitored_conditions:
+  #       - temperature
+  #       - precipitation
+  #       - precipitation_forecast_average
+  #       - precipitation_forecast_total
+  #       - next_rain_forecast
+
+#  - platform: afvalbeheer
+#    wastecollector: Avri
+#    resources:
+#      - pmd
+#      - gft
+#      - papier
+#    postcode: !secret Home_PostalCode
+#    streetnumber: !secret Home_StreetNumber
+#    upcomingsensor: 1
+#    dateformat: "%d %b"
+#    printwastetypes: 0
+#    dateonly: 0
+#    dayofweek: 1
+#    alwaysshowday: 1
+#    dateobject: 0
+#    name: "Afvalbeheer"
+#    nameprefix: 1
+#    builtinicons: 0
+#    disableicons: 0
+#    dutch: 1
+
+#Zone's Definition
+zone:
+  - name: Home
+    latitude: !secret Home_Latitude
+    longitude: !secret Home_Longitude
+    radius: 35
+    icon: mdi:home
+
+  - name: Work_Bart
+    latitude: !secret Work_Bart_Latitude
+    longitude: !secret Work_Bart_Longitude
+    radius: 150
+    icon: mdi:robot-industrial
+
+  - name: Work_Lotte
+    latitude: !secret Work_Lotte_Latitude
+    longitude: !secret Work_Lotte_Longitude
+    radius: 150
+    icon: mdi:diamond-stone
+
+  - name: Fitness_Bart
+    latitude: !secret Fitness_Bart_Latitude
+    longitude: !secret Fitness_Bart_Longitude
+    radius: 150
+    icon: mdi:weight-lifter
+
+    #  customize:
+#    zone.Home:
+#      Friendly_name: Thuis
+#    zone.Work_lotte:
+#      Friendly_name: Werk
+#    zone.Work_Bart:
+#      Friendly_name: Werk
+#    zone.Fitness_Bart:
+#      Friendly_name: Fitness
